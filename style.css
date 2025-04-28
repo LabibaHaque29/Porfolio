@@ -245,6 +245,7 @@ body {
 }
 
 /* Projects Section */
+
 .project-scroll-hint {
     margin-bottom: 15px;
     font-size: 0.9rem;
@@ -261,10 +262,8 @@ body {
     scroll-padding: 20px;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
-    /* For smooth scrolling on iOS */
 }
 
-/* Hide scrollbar but keep functionality */
 .projects-grid::-webkit-scrollbar {
     height: 8px;
 }
@@ -280,9 +279,7 @@ body {
 
 .project-card {
     flex: 0 0 350px;
-    /* Fixed width for each card */
     min-width: 350px;
-    /* Ensures cards don't shrink too small */
     display: flex;
     flex-direction: column;
     background-color: white;
@@ -390,7 +387,7 @@ body {
     background-color: var(--light-gray);
 }
 
-
+/*Resume Download*/
 
 .resume-download {
     text-align: center;
