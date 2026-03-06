@@ -65,35 +65,131 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 4. Highlight active section while scrolling
+    // Cache section positions to avoid forced reflow on every scroll event
+    let sectionPositions = [];
+    function updateSectionPositions() {
+        sectionPositions = Array.from(sections).map(section => ({
+            el: section,
+            top: section.offsetTop,
+            height: section.offsetHeight,
+            id: section.getAttribute('id')
+        }));
+    }
+    updateSectionPositions();
+
     function handleScroll() {
         const scrollPosition = window.scrollY;
-        
-        sections.forEach(section => {
-            const sectionTop = section.offsetTop;
-            const sectionHeight = section.offsetHeight;
-            
-            if (scrollPosition >= sectionTop - 100 && 
-                scrollPosition < sectionTop + sectionHeight - 100) {
-                
-                const currentId = section.getAttribute('id');
-                const activeLink = document.querySelector(`.nav-links a[href="#${currentId}"]`);
-                
+
+        sectionPositions.forEach(({ top, height, id }) => {
+            if (scrollPosition >= top - 100 &&
+                scrollPosition < top + height - 100) {
+
+                const activeLink = document.querySelector(`.nav-links a[href="#${id}"]`);
                 navLinks.forEach(link => link.classList.remove('active'));
                 if (activeLink) activeLink.classList.add('active');
             }
         });
     }
     
+    // 5. Blur-in animation for about section
+    function setupAboutAnimation() {
+        const aboutElements = document.querySelectorAll('.about-text, .about-highlights');
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('blur-in');
+                } else {
+                    entry.target.classList.remove('blur-in');
+                }
+            });
+        }, { threshold: 0.2 });
+
+        aboutElements.forEach(function(el) {
+            observer.observe(el);
+        });
+    }
+
+    // 6. Slide-in animation for experience items
+    function setupExperienceAnimation() {
+        const experienceItems = Array.from(document.querySelectorAll('.experience-item'));
+        const pendingTimeouts = new Map();
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    const i = experienceItems.indexOf(entry.target);
+                    const id = setTimeout(function() {
+                        entry.target.classList.add('slide-in');
+                        pendingTimeouts.delete(entry.target);
+                    }, i * 150);
+                    pendingTimeouts.set(entry.target, id);
+                } else {
+                    const pending = pendingTimeouts.get(entry.target);
+                    if (pending !== undefined) {
+                        clearTimeout(pending);
+                        pendingTimeouts.delete(entry.target);
+                    }
+                    entry.target.classList.remove('slide-in');
+                }
+            });
+        }, { threshold: 0.15 });
+
+        experienceItems.forEach(function(item) {
+            observer.observe(item);
+        });
+    }
+
+    // 7. Project card zoom animation
+    function setupProjectCardAnimation() {
+        const track = document.querySelector('.projects-grid');
+        const cards = document.querySelectorAll('.project-card');
+        if (!track || !cards.length) return;
+
+        // IntersectionObserver for springy zoom
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                } else {
+                    entry.target.classList.remove('visible');
+                }
+            });
+        }, {
+            root: track,
+            threshold: 0.35
+        });
+
+        cards.forEach(function(card) { observer.observe(card); });
+    }
+
     // Initialize
     typeText();
     setupNavigation();
     setupMobileMenu();
+    setupAboutAnimation();
+    setupExperienceAnimation();
+    setupProjectCardAnimation();
     
     // Event listeners
-    window.addEventListener('scroll', handleScroll);
-    window.addEventListener('resize', function() {
-        if (window.innerWidth > 768) {
-            sidebar.classList.remove('active');
+    // Throttle scroll with requestAnimationFrame so it never runs more than once per frame
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+        if (!ticking) {
+            requestAnimationFrame(() => { handleScroll(); ticking = false; });
+            ticking = true;
         }
+    });
+
+    // Debounce resize — only act after the user stops resizing for 150ms
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            if (window.innerWidth > 768) {
+                sidebar.classList.remove('active');
+            }
+            // Re-cache positions because layout may have changed
+            updateSectionPositions();
+        }, 150);
     });
 });
