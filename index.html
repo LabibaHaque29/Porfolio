@@ -163,9 +163,15 @@
 
 
         <section id="projects" class="content-section">
-            <h2>Projects</h2>
-            <div class="project-scroll-hint">Scroll horizontally to see more projects →</div>
-            <div class="projects-grid">
+            <div class="projects-header">
+                <h2>Projects</h2>
+                <div class="carousel-arrows">
+                    <button class="carousel-arrow" id="carousel-prev" aria-label="Previous project">&#8592;</button>
+                    <button class="carousel-arrow" id="carousel-next" aria-label="Next project">&#8594;</button>
+                </div>
+            </div>
+            <div class="carousel-track-wrapper">
+                <div class="projects-grid">
 
                    <!--CryptoSight AI-->
                 <div class="project-card">
@@ -250,6 +256,11 @@
                     </div>
                 </div>
 
+                </div>
+            </div>
+            <div class="carousel-footer">
+                <div class="carousel-progress-bar"><div class="carousel-progress-fill"></div></div>
+                <span class="carousel-counter">1 / 4</span>
             </div>
         </section>
 
@@ -303,7 +314,29 @@
 
     <script src="script.js"></script>
     <script src="skills.js"></script>
-   
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const chips = document.querySelectorAll('.skill-item');
+        const observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            const chip = entry.target;
+            const index = Array.from(chips).indexOf(chip);
+            if (entry.isIntersecting) {
+              chip.style.transitionDelay = (index % 12) * 60 + 'ms';
+              chip.classList.add('visible');
+            } else {
+              chip.style.transitionDelay = '0ms';
+              chip.classList.remove('visible');
+            }
+          });
+        }, { threshold: 0.2 });
+
+        chips.forEach(function (chip) {
+          observer.observe(chip);
+        });
+      });
+    </script>
 
 </body>
 </html>

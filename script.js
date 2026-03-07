@@ -139,13 +139,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 7. Project card zoom animation
+    // 7. Project card carousel with zoom-in spring animation
     function setupProjectCardAnimation() {
         const track = document.querySelector('.projects-grid');
-        const cards = document.querySelectorAll('.project-card');
+        const cards = Array.from(document.querySelectorAll('.project-card'));
+        const prevBtn = document.getElementById('carousel-prev');
+        const nextBtn = document.getElementById('carousel-next');
+        const progressFill = document.querySelector('.carousel-progress-fill');
+        const counter = document.querySelector('.carousel-counter');
         if (!track || !cards.length) return;
 
-        // IntersectionObserver for springy zoom
+        const total = cards.length;
+
+        // IntersectionObserver for springy zoom — root is the scrollable track
         const observer = new IntersectionObserver(function(entries) {
             entries.forEach(function(entry) {
                 if (entry.isIntersecting) {
@@ -154,12 +160,62 @@ document.addEventListener('DOMContentLoaded', function() {
                     entry.target.classList.remove('visible');
                 }
             });
-        }, {
-            root: track,
-            threshold: 0.35
-        });
+        }, { root: track, threshold: 0.3 });
 
         cards.forEach(function(card) { observer.observe(card); });
+
+        // Compute per-card scroll step from card offsets (accounts for gap + padding)
+        function cardStep() {
+            return cards.length > 1 ? cards[1].offsetLeft - cards[0].offsetLeft : cards[0].offsetWidth;
+        }
+
+        // Update progress bar and counter on scroll
+        function updateUI() {
+            const maxScroll = track.scrollWidth - track.clientWidth;
+            const pct = maxScroll > 0 ? (track.scrollLeft / maxScroll) * 100 : 0;
+            progressFill.style.width = pct + '%';
+            const step = cardStep();
+            const index = step > 0 ? Math.min(Math.round(track.scrollLeft / step), total - 1) : 0;
+            counter.textContent = (index + 1) + ' / ' + total;
+        }
+
+        track.addEventListener('scroll', updateUI, { passive: true });
+        updateUI();
+
+        // Arrow buttons — scroll exactly one card width
+        prevBtn.addEventListener('click', function() {
+            track.scrollBy({ left: -cardStep(), behavior: 'smooth' });
+        });
+        nextBtn.addEventListener('click', function() {
+            track.scrollBy({ left: cardStep(), behavior: 'smooth' });
+        });
+
+        // Click-and-drag to scroll freely
+        let isDragging = false;
+        let startX = 0;
+        let startScrollLeft = 0;
+
+        track.addEventListener('mousedown', function(e) {
+            isDragging = true;
+            startX = e.pageX - track.getBoundingClientRect().left;
+            startScrollLeft = track.scrollLeft;
+            track.style.cursor = 'grabbing';
+            track.style.userSelect = 'none';
+        });
+
+        document.addEventListener('mouseup', function() {
+            if (!isDragging) return;
+            isDragging = false;
+            track.style.cursor = '';
+            track.style.userSelect = '';
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            const x = e.pageX - track.getBoundingClientRect().left;
+            track.scrollLeft = startScrollLeft - (x - startX);
+        });
     }
 
     // Initialize
