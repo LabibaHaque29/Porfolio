@@ -218,6 +218,22 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // 8. Slide-in from left for content sections (fires once, stays visible)
+    function setupSectionSlideIn() {
+        var contentSections = document.querySelectorAll('.content-section');
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('in-view');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.08 });
+        contentSections.forEach(function (section) {
+            observer.observe(section);
+        });
+    }
+
     // Initialize
     typeText();
     setupNavigation();
@@ -225,6 +241,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupAboutAnimation();
     setupExperienceAnimation();
     setupProjectCardAnimation();
+    setupSectionSlideIn();
     
     // Event listeners
     // Throttle scroll with requestAnimationFrame so it never runs more than once per frame
